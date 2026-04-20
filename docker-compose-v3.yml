@@ -1,14 +1,39 @@
 version: '3'
 
 services:
+  kdc:
+    build:
+      context: ./kdc
+    image: bde2020/hadoop-kdc:2.0.0-hadoop3.2.1-java8
+    networks:
+      - hbase
+    hostname: kdc.hadoop.lab
+    volumes:
+      - kerberos_secrets:/etc/security/keytabs
+      - ./kerberos/krb5.conf:/etc/krb5.conf:ro
+      - ./kerberos/kdc.conf:/etc/krb5kdc/kdc.conf:ro
+      - ./kerberos/kadm5.acl:/etc/krb5kdc/kadm5.acl:ro
+    environment:
+      REALM: HADOOP.LAB
+      KDC_HOST: kdc.hadoop.lab
+      KDC_DB_PASSWORD: masterpw
+      KADMIN_PRINCIPAL: admin/admin@HADOOP.LAB
+      KADMIN_PASSWORD: adminpw
+      USERA_PASSWORD: userapw
+      USERB_PASSWORD: userbpw
+
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     networks:
       - hbase
+    hostname: namenode.hadoop.lab
     volumes:
       - namenode:/hadoop/dfs/name
+      - kerberos_secrets:/etc/security/keytabs:ro
+      - ./kerberos/krb5.conf:/etc/krb5.conf:ro
     environment:
       - CLUSTER_NAME=test
+      - SERVICE_PRECONDITION=kdc:88
     env_file:
       - ./hadoop.env
     deploy:
@@ -27,12 +52,15 @@ services:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     networks:
       - hbase
+    hostname: datanode.hadoop.lab
     volumes:
       - datanode:/hadoop/dfs/data
+      - kerberos_secrets:/etc/security/keytabs:ro
+      - ./kerberos/krb5.conf:/etc/krb5.conf:ro
     env_file:
       - ./hadoop.env
     environment:
-      SERVICE_PRECONDITION: "namenode:50070"
+      SERVICE_PRECONDITION: "kdc:88 namenode:50070"
     deploy:
       mode: global
       restart_policy:
@@ -45,8 +73,12 @@ services:
     image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
     networks:
       - hbase
+    hostname: resourcemanager.hadoop.lab
+    volumes:
+      - kerberos_secrets:/etc/security/keytabs:ro
+      - ./kerberos/krb5.conf:/etc/krb5.conf:ro
     environment:
-      SERVICE_PRECONDITION: "namenode:50070 datanode:50075"
+      SERVICE_PRECONDITION: "kdc:88 namenode:50070 datanode:50075"
     env_file:
       - ./hadoop.env
     deploy:
@@ -67,8 +99,12 @@ services:
     image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
     networks:
       - hbase
+    hostname: nodemanager.hadoop.lab
+    volumes:
+      - kerberos_secrets:/etc/security/keytabs:ro
+      - ./kerberos/krb5.conf:/etc/krb5.conf:ro
     environment:
-      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 resourcemanager:8088"
+      SERVICE_PRECONDITION: "kdc:88 namenode:50070 datanode:50075 resourcemanager:8088"
     env_file:
       - ./hadoop.env
     deploy:
@@ -83,10 +119,13 @@ services:
     image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
     networks:
       - hbase
+    hostname: historyserver.hadoop.lab
     volumes:
       - hadoop_historyserver:/hadoop/yarn/timeline
+      - kerberos_secrets:/etc/security/keytabs:ro
+      - ./kerberos/krb5.conf:/etc/krb5.conf:ro
     environment:
-      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 resourcemanager:8088"
+      SERVICE_PRECONDITION: "kdc:88 namenode:50070 datanode:50075 resourcemanager:8088"
     env_file:
       - ./hadoop.env
     deploy:
@@ -103,6 +142,7 @@ volumes:
   datanode:
   namenode:
   hadoop_historyserver:
+  kerberos_secrets:
 
 networks:
   hbase:
