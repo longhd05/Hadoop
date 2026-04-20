@@ -1,61 +1,159 @@
-version: "3"
+version: "3.8"
 
 services:
+  kdc:
+    build:
+      context: ./kdc
+    image: bde2020/hadoop-kdc:2.0.0-hadoop3.2.1-java8
+    container_name: kdc
+    hostname: kdc.hadoop.lab
+    restart: always
+    ports:
+      - 88:88
+      - 88:88/udp
+      - 749:749
+    volumes:
+      - kerberos_secrets:/etc/security/keytabs
+      - ./kerberos/krb5.conf:/etc/krb5.conf:ro
+      - ./kerberos/kdc.conf:/etc/krb5kdc/kdc.conf:ro
+      - ./kerberos/kadm5.acl:/etc/krb5kdc/kadm5.acl:ro
+    environment:
+      REALM: HADOOP.LAB
+      KDC_HOST: kdc.hadoop.lab
+      KDC_DB_PASSWORD: masterpw
+      KADMIN_PRINCIPAL: admin/admin@HADOOP.LAB
+      KADMIN_PASSWORD: adminpw
+      USERA_PASSWORD: userapw
+      USERB_PASSWORD: userbpw
+    healthcheck:
+      test: ["CMD", "bash", "-c", "pgrep -x krb5kdc >/dev/null && pgrep -x kadmind >/dev/null && test -f /etc/security/keytabs/spnego.service.keytab && kadmin.local -q 'listprincs' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    networks:
+      default:
+        aliases:
+          - kdc.hadoop.lab
+
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     container_name: namenode
+    hostname: namenode.hadoop.lab
     restart: always
+    depends_on:
+      kdc:
+        condition: service_healthy
     ports:
       - 9870:9870
       - 9000:9000
     volumes:
       - hadoop_namenode:/hadoop/dfs/name
+      - kerberos_secrets:/etc/security/keytabs:ro
+      - ./kerberos/krb5.conf:/etc/krb5.conf:ro
     environment:
       - CLUSTER_NAME=test
+      - SERVICE_PRECONDITION=kdc:88
     env_file:
       - ./hadoop.env
+    healthcheck:
+      disable: true
+    networks:
+      default:
+        aliases:
+          - namenode.hadoop.lab
 
   datanode:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: datanode
+    hostname: datanode.hadoop.lab
     restart: always
+    depends_on:
+      kdc:
+        condition: service_healthy
     volumes:
       - hadoop_datanode:/hadoop/dfs/data
+      - kerberos_secrets:/etc/security/keytabs:ro
+      - ./kerberos/krb5.conf:/etc/krb5.conf:ro
     environment:
-      SERVICE_PRECONDITION: "namenode:9870"
+      SERVICE_PRECONDITION: "kdc:88 namenode:9870"
     env_file:
       - ./hadoop.env
+    healthcheck:
+      disable: true
+    networks:
+      default:
+        aliases:
+          - datanode.hadoop.lab
   
   resourcemanager:
     image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
     container_name: resourcemanager
+    hostname: resourcemanager.hadoop.lab
     restart: always
+    depends_on:
+      kdc:
+        condition: service_healthy
+    volumes:
+      - kerberos_secrets:/etc/security/keytabs:ro
+      - ./kerberos/krb5.conf:/etc/krb5.conf:ro
     environment:
-      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864"
+      SERVICE_PRECONDITION: "kdc:88 namenode:9000 namenode:9870 datanode:9864"
     env_file:
       - ./hadoop.env
+    healthcheck:
+      disable: true
+    networks:
+      default:
+        aliases:
+          - resourcemanager.hadoop.lab
 
   nodemanager1:
     image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
     container_name: nodemanager
+    hostname: nodemanager.hadoop.lab
     restart: always
+    depends_on:
+      kdc:
+        condition: service_healthy
+    volumes:
+      - kerberos_secrets:/etc/security/keytabs:ro
+      - ./kerberos/krb5.conf:/etc/krb5.conf:ro
     environment:
-      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864 resourcemanager:8088"
+      SERVICE_PRECONDITION: "kdc:88 namenode:9000 namenode:9870 datanode:9864 resourcemanager:8088"
     env_file:
       - ./hadoop.env
+    healthcheck:
+      disable: true
+    networks:
+      default:
+        aliases:
+          - nodemanager.hadoop.lab
   
   historyserver:
     image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
     container_name: historyserver
+    hostname: historyserver.hadoop.lab
     restart: always
+    depends_on:
+      kdc:
+        condition: service_healthy
     environment:
-      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864 resourcemanager:8088"
+      SERVICE_PRECONDITION: "kdc:88 namenode:9000 namenode:9870 datanode:9864 resourcemanager:8088"
     volumes:
       - hadoop_historyserver:/hadoop/yarn/timeline
+      - kerberos_secrets:/etc/security/keytabs:ro
+      - ./kerberos/krb5.conf:/etc/krb5.conf:ro
     env_file:
       - ./hadoop.env
+    healthcheck:
+      disable: true
+    networks:
+      default:
+        aliases:
+          - historyserver.hadoop.lab
   
 volumes:
   hadoop_namenode:
   hadoop_datanode:
   hadoop_historyserver:
+  kerberos_secrets:
