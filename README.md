@@ -171,7 +171,7 @@ Full end-to-end (recommended):
 8. **Permissions not enforced**
    - `docker compose exec namenode hdfs getconf -confKey dfs.permissions.enabled`
    - rerun `./scripts/verify-multiuser-hdfs.sh`
-9. **Compose v3/swam startup waits on wrong ports**
+9. **Compose v3/swarm startup waits on wrong ports**
    - confirm v3 preconditions use NameNode `9870` and DataNode `9864`
 10. **Cluster build fails before runtime (base image)**
     - `make build` currently fails on upstream Debian stretch apt repositories (`404`); use compose runtime with available images or update base image lineage separately.
