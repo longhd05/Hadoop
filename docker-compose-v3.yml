@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   kdc:
     build:
@@ -19,8 +17,8 @@ services:
       KDC_DB_PASSWORD: masterpw
       KADMIN_PRINCIPAL: admin/admin@HADOOP.LAB
       KADMIN_PASSWORD: adminpw
-      USERA_PASSWORD: userapw
-      USERB_PASSWORD: userbpw
+      LONGHD_PASSWORD: Hehehe123!@#
+      KIDO_PASSWORD: Hehehe123!@#
 
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8

@@ -19,7 +19,7 @@ Then verify the cluster and multi-user ownership behavior:
 ./scripts/verify-multiuser-hdfs.sh
 ```
 
-Run the smoke test for userA/userB behavior:
+Run the smoke test for longhd/kido behavior:
 
 ```bash
 ./scripts/smoke-test-kerberos.sh
@@ -73,18 +73,18 @@ Generated service principals:
 - `HTTP/<service-fqdn>@HADOOP.LAB` for SPNEGO
 
 Generated user principals:
-- `usera@HADOOP.LAB`
-- `userb@HADOOP.LAB`
+- `longhd@HADOOP.LAB`
+- `kido@HADOOP.LAB`
 
-## `kinit` examples (userA/userB)
+## `kinit` examples (longhd/kido)
 
 From inside a Hadoop container (example: NameNode):
 
 ```bash
-docker compose exec namenode kinit -kt /etc/security/keytabs/usera.user.keytab usera@HADOOP.LAB
+docker compose exec namenode kinit -kt /etc/security/keytabs/longhd.user.keytab longhd@HADOOP.LAB
 docker compose exec namenode klist
 
-docker compose exec namenode kinit -kt /etc/security/keytabs/userb.user.keytab userb@HADOOP.LAB
+docker compose exec namenode kinit -kt /etc/security/keytabs/kido.user.keytab kido@HADOOP.LAB
 docker compose exec namenode klist
 ```
 
@@ -96,14 +96,14 @@ In `about:config` set:
 - `network.negotiate-auth.delegation-uris` = `.hadoop.lab` (optional for delegation)
 - `network.negotiate-auth.allow-non-fqdn` = `false`
 
-Authenticate on the client first (`kinit usera@HADOOP.LAB`), then open the FQDN UI URLs.
+Authenticate on the client first (`kinit longhd@HADOOP.LAB`), then open the FQDN UI URLs.
 
 ## WebHDFS/UI auth checks
 
 With Kerberos ticket in the client shell:
 
 ```bash
-kinit usera@HADOOP.LAB
+kinit longhd@HADOOP.LAB
 curl --negotiate -u : "http://namenode.hadoop.lab:9870/webhdfs/v1/?op=LISTSTATUS"
 ```
 
@@ -112,25 +112,25 @@ For browser checks, open NameNode/ResourceManager/HistoryServer FQDN URLs and co
 Negative check (must fail if not authenticated):
 
 ```bash
-curl -i "http://namenode.hadoop.lab:9870/webhdfs/v1/?op=GETHOMEDIRECTORY&user.name=usera"
+curl -i "http://namenode.hadoop.lab:9870/webhdfs/v1/?op=GETHOMEDIRECTORY&user.name=longhd"
 ```
 
-Expected: `401 Unauthorized` (not an authenticated userA response).
+Expected: `401 Unauthorized` (not an authenticated longhd response).
 
 ## Verify HDFS owner/group/permissions
 
-Create a file as `usera` and check owner/group/permissions:
+Create a file as `longhd` and check owner/group/permissions:
 
 ```bash
-docker compose exec namenode bash -lc 'kinit -kt /etc/security/keytabs/usera.user.keytab usera@HADOOP.LAB && echo hello >/tmp/u1.txt && hdfs dfs -put -f /tmp/u1.txt /secure-lab/u1.txt && hdfs dfs -ls /secure-lab'
+docker compose exec namenode bash -lc 'kinit -kt /etc/security/keytabs/longhd.user.keytab longhd@HADOOP.LAB && echo hello >/tmp/u1.txt && hdfs dfs -put -f /tmp/u1.txt /secure-lab/u1.txt && hdfs dfs -ls /secure-lab'
 ```
 
-Ownership should show `usera` as file owner.
+Ownership should show `longhd` as file owner.
 
-Then verify `userb` cannot overwrite/delete unless permissions allow:
+Then verify `kido` cannot overwrite/delete unless permissions allow:
 
 ```bash
-docker compose exec namenode bash -lc 'kinit -kt /etc/security/keytabs/userb.user.keytab userb@HADOOP.LAB && echo blocked >/tmp/u2.txt && hdfs dfs -put -f /tmp/u2.txt /secure-lab/u1.txt'
+docker compose exec namenode bash -lc 'kinit -kt /etc/security/keytabs/kido.user.keytab kido@HADOOP.LAB && echo blocked >/tmp/u2.txt && hdfs dfs -put -f /tmp/u2.txt /secure-lab/u1.txt'
 ```
 
 Expected: permission denied unless ACL/mode grants write.
@@ -169,7 +169,7 @@ Full end-to-end (recommended):
    - verify Firefox `network.negotiate-auth.trusted-uris=.hadoop.lab`
    - ensure URL is FQDN, not IP/localhost alias mismatch
 6. **WebHDFS accepts `user.name` without Kerberos (unexpected)**
-   - `curl -i "http://namenode.hadoop.lab:9870/webhdfs/v1/?op=GETHOMEDIRECTORY&user.name=usera"`
+   - `curl -i "http://namenode.hadoop.lab:9870/webhdfs/v1/?op=GETHOMEDIRECTORY&user.name=longhd"`
    - should be `401`; if not, inspect `core-site.xml` and `hdfs-site.xml`
 7. **HDFS owner not mapped to short name**
    - `docker compose exec namenode hdfs dfs -stat %u /path/file`
@@ -205,7 +205,7 @@ Full end-to-end (recommended):
   - Symptom: HDFS owner appears as full principal or unexpected user.
   - Fix: verify ticket principal and resulting owner:
     - `docker compose exec namenode klist`
-    - `docker compose exec namenode hdfs dfs -stat %u /secure-lab/smoke_test_usera.txt`
+    - `docker compose exec namenode hdfs dfs -stat %u /secure-lab/smoke_test_longhd.txt`
 
 ## Configure Environment Variables mapping
 
