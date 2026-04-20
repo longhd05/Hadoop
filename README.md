@@ -205,7 +205,7 @@ Full end-to-end (recommended):
   - Symptom: HDFS owner appears as full principal or unexpected user.
   - Fix: verify ticket principal and resulting owner:
     - `docker compose exec namenode klist`
-    - `docker compose exec namenode hdfs dfs -stat %u /secure-lab/smoke-usera.txt`
+    - `docker compose exec namenode hdfs dfs -stat %u /secure-lab/smoke_test_usera.txt`
 
 ## Configure Environment Variables mapping
 

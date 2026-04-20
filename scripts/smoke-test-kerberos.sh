@@ -57,7 +57,12 @@ wait_for_kdc_ready() {
   local deadline now
   deadline=$(( $(date +%s) + WAIT_TIMEOUT_SECONDS ))
   while :; do
-    if compose exec -T kdc bash -lc "test -f /etc/security/keytabs/usera.user.keytab && test -f /etc/security/keytabs/userb.user.keytab && kadmin.local -q 'listprincs' >/dev/null 2>&1"; then
+    if compose exec -T kdc bash -lc '
+      set -euo pipefail
+      test -f /etc/security/keytabs/usera.user.keytab
+      test -f /etc/security/keytabs/userb.user.keytab
+      kadmin.local -q "listprincs" >/dev/null 2>&1
+    '; then
       pass "KDC is ready and keytabs are present"
       return 0
     fi
