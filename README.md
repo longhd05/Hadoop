@@ -19,6 +19,12 @@ Then verify the cluster and multi-user ownership behavior:
 ./scripts/verify-multiuser-hdfs.sh
 ```
 
+Run the smoke test for userA/userB behavior:
+
+```bash
+./scripts/smoke-test-kerberos.sh
+```
+
 The verification script also checks effective runtime values for:
 - `hadoop.security.authentication=kerberos`
 - `hadoop.security.authorization=true`
@@ -175,6 +181,31 @@ Full end-to-end (recommended):
    - confirm v3 preconditions use NameNode `9870` and DataNode `9864`
 10. **Cluster build fails before runtime (base image)**
     - `make build` currently fails on upstream Debian stretch apt repositories (`404`); use compose runtime with available images or update base image lineage separately.
+
+## Smoke-test troubleshooting (quick)
+
+- **Missing trusted URIs in Firefox**
+  - Symptom: browser keeps prompting or never sends SPNEGO ticket.
+  - Fix: set `network.negotiate-auth.trusted-uris=.hadoop.lab` and retry using FQDN URLs.
+- **Hostname resolution errors**
+  - Symptom: `Could not resolve host` or SPNEGO principal mismatch.
+  - Fix: verify `getent hosts namenode.hadoop.lab` on VM and client; correct `/etc/hosts` entries.
+- **Principal/keytab mismatch**
+  - Symptom: `Server not found in Kerberos database` or GSS failures.
+  - Fix: check hostname and keytab principals:
+    - `docker compose exec namenode hostname -f`
+    - `docker compose exec namenode klist -k /etc/security/keytabs/nn.service.keytab`
+- **Service startup order**
+  - Symptom: smoke test fails early because services are not yet running.
+  - Fix: `docker compose up -d --build` then check `docker compose ps`; rerun smoke test after KDC and Hadoop daemons are healthy.
+- **WebHDFS redirects**
+  - Symptom: curl/browser follows redirects to hostnames that are not resolvable or trusted.
+  - Fix: use FQDN endpoints and follow redirects with Kerberos (`curl --negotiate -u : -L ...`) after `kinit`.
+- **Wrong short-name mapping**
+  - Symptom: HDFS owner appears as full principal or unexpected user.
+  - Fix: verify ticket principal and resulting owner:
+    - `docker compose exec namenode klist`
+    - `docker compose exec namenode hdfs dfs -stat %u /secure-lab/smoke-usera.txt`
 
 ## Configure Environment Variables mapping
 
