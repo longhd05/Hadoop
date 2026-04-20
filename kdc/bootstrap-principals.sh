@@ -4,8 +4,8 @@ set -euo pipefail
 REALM=${REALM:-HADOOP.LAB}
 KADMIN_PRINCIPAL=${KADMIN_PRINCIPAL:-admin/admin@${REALM}}
 KADMIN_PASSWORD=${KADMIN_PASSWORD:-adminpw}
-USERA_PASSWORD=${USERA_PASSWORD:-userapw}
-USERB_PASSWORD=${USERB_PASSWORD:-userbpw}
+LONGHD_PASSWORD=${LONGHD_PASSWORD:-${USERA_PASSWORD:-Hehehe123!@#}}
+KIDO_PASSWORD=${KIDO_PASSWORD:-${USERB_PASSWORD:-Hehehe123!@#}}
 KEYTAB_DIR=${KEYTAB_DIR:-/etc/security/keytabs}
 umask 077
 
@@ -28,8 +28,8 @@ add_service_principal() {
 }
 
 add_password_principal "$KADMIN_PRINCIPAL" "$KADMIN_PASSWORD"
-add_password_principal "usera@${REALM}" "$USERA_PASSWORD"
-add_password_principal "userb@${REALM}" "$USERB_PASSWORD"
+add_password_principal "longhd@${REALM}" "$LONGHD_PASSWORD"
+add_password_principal "kido@${REALM}" "$KIDO_PASSWORD"
 
 services=(
   "nn/namenode.hadoop.lab@${REALM}:nn.service.keytab"
@@ -54,10 +54,10 @@ for host in namenode.hadoop.lab datanode.hadoop.lab resourcemanager.hadoop.lab n
   kadmin.local -q "ktadd -k ${KEYTAB_DIR}/spnego.service.keytab ${principal}"
 done
 
-rm -f "${KEYTAB_DIR}/usera.user.keytab"
-rm -f "${KEYTAB_DIR}/userb.user.keytab"
-kadmin.local -q "ktadd -k ${KEYTAB_DIR}/usera.user.keytab usera@${REALM}"
-kadmin.local -q "ktadd -k ${KEYTAB_DIR}/userb.user.keytab userb@${REALM}"
+rm -f "${KEYTAB_DIR}/longhd.user.keytab"
+rm -f "${KEYTAB_DIR}/kido.user.keytab"
+kadmin.local -q "ktadd -k ${KEYTAB_DIR}/longhd.user.keytab longhd@${REALM}"
+kadmin.local -q "ktadd -k ${KEYTAB_DIR}/kido.user.keytab kido@${REALM}"
 
 if [ ! -f "${KEYTAB_DIR}/http-secret" ]; then
   head -c 32 /dev/urandom | base64 > "${KEYTAB_DIR}/http-secret"

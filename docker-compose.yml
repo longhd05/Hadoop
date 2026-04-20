@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   kdc:
     build:
@@ -23,10 +21,10 @@ services:
       KDC_DB_PASSWORD: masterpw
       KADMIN_PRINCIPAL: admin/admin@HADOOP.LAB
       KADMIN_PASSWORD: adminpw
-      USERA_PASSWORD: userapw
-      USERB_PASSWORD: userbpw
+      LONGHD_PASSWORD: Hehehe123!@#
+      KIDO_PASSWORD: Hehehe123!@#
     healthcheck:
-      test: ["CMD", "bash", "-c", "pgrep -x krb5kdc >/dev/null && pgrep -x kadmind >/dev/null && test -f /etc/security/keytabs/spnego.service.keytab && kadmin.local -q 'listprincs' >/dev/null 2>&1"]
+      test: ["CMD", "bash", "-c", "test -f /etc/security/keytabs/spnego.service.keytab && kadmin.local -q 'listprincs' >/dev/null 2>&1"]
       interval: 10s
       timeout: 5s
       retries: 15
