@@ -90,7 +90,7 @@ wait_for_services_running
 wait_for_kdc_ready
 wait_for_hdfs_ready
 
-echo "[2/7] kinit as userA and upload file"
+echo "[2/7] kinit as usera and upload file"
 compose exec -T namenode bash -lc '
   set -euo pipefail
   kdestroy >/dev/null 2>&1 || true
@@ -101,41 +101,41 @@ compose exec -T namenode bash -lc '
   hdfs dfs -put -f /tmp/smoke-usera.txt /secure-lab/smoke-usera.txt
   hdfs dfs -chmod 644 /secure-lab/smoke-usera.txt
 '
-pass "userA created /secure-lab/smoke-usera.txt"
+pass "usera created /secure-lab/smoke-usera.txt"
 
-echo "[3/7] verify owner is userA"
+echo "[3/7] verify owner is usera"
 owner=$(compose exec -T namenode bash -lc 'hdfs dfs -stat %u /secure-lab/smoke-usera.txt' | tr -d '\r')
 if [[ "$owner" != "usera" ]]; then
   fail "Expected owner=usera, got owner=${owner}"
 fi
 pass "Owner check passed (usera)"
 
-echo "[4/7] kinit as userB"
+echo "[4/7] kinit as userb"
 compose exec -T namenode bash -lc '
   set -euo pipefail
   kdestroy >/dev/null 2>&1 || true
   kinit -kt /etc/security/keytabs/userb.user.keytab userb@HADOOP.LAB
   klist
 ' >/dev/null
-pass "userB Kerberos login succeeded"
+pass "userb Kerberos login succeeded"
 
-echo "[5/7] verify userB can read when permissions allow"
+echo "[5/7] verify userb can read when permissions allow"
 read_value=$(compose exec -T namenode bash -lc 'hdfs dfs -cat /secure-lab/smoke-usera.txt' | tr -d '\r')
 if [[ "$read_value" != "smoke test written by usera" ]]; then
-  fail "userB read check failed. Expected file content not returned."
+  fail "userb read check failed. Expected file content not returned."
 fi
-pass "userB read allowed as expected"
+pass "userb read allowed as expected"
 
-echo "[6/7] verify userB cannot overwrite when permissions deny"
+echo "[6/7] verify userb cannot overwrite when permissions deny"
 if compose exec -T namenode bash -lc 'echo "should fail overwrite" > /tmp/smoke-userb.txt && hdfs dfs -put -f /tmp/smoke-userb.txt /secure-lab/smoke-usera.txt'; then
-  fail "Unexpected success: userB overwrote userA file"
+  fail "Unexpected success: userb overwrote usera file"
 fi
-pass "userB overwrite denied as expected"
+pass "userb overwrite denied as expected"
 
-echo "[7/7] verify userB cannot delete when permissions deny"
+echo "[7/7] verify userb cannot delete when permissions deny"
 if compose exec -T namenode bash -lc 'hdfs dfs -rm -f /secure-lab/smoke-usera.txt'; then
-  fail "Unexpected success: userB deleted userA file"
+  fail "Unexpected success: userb deleted usera file"
 fi
-pass "userB delete denied as expected"
+pass "userb delete denied as expected"
 
 echo "PASS: Kerberos smoke test completed (${PASS_COUNT} checks passed)"

@@ -18,7 +18,10 @@ compose exec -T namenode bash -lc '
 '
 
 echo "[2/6] verify WebHDFS does not accept unauthenticated user.name pseudo-auth"
-status=$(compose exec -T namenode bash -lc 'curl -sS -o /dev/null -w "%{http_code}" "http://namenode.hadoop.lab:9870/webhdfs/v1/?op=GETHOMEDIRECTORY&user.name=usera"' | tr -d '\r')
+if ! status=$(compose exec -T namenode bash -lc 'curl -sS -o /dev/null -w "%{http_code}" "http://namenode.hadoop.lab:9870/webhdfs/v1/?op=GETHOMEDIRECTORY&user.name=usera"' | tr -d '\r'); then
+  echo "WebHDFS connectivity/auth probe failed before receiving HTTP status"
+  exit 1
+fi
 if [[ "$status" != "401" ]]; then
   echo "Expected HTTP 401 for unauthenticated WebHDFS user.name access, got: $status"
   exit 1
