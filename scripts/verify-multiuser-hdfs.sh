@@ -61,4 +61,4 @@ compose exec -T namenode bash -lc '
   fi
 '
 
-echo "[6/6] permission check passed: userb blocked as expected"
+echo "[6/6] permissions check passed: userb blocked as expected"

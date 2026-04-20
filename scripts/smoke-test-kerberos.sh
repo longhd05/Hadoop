@@ -95,16 +95,16 @@ compose exec -T namenode bash -lc '
   set -euo pipefail
   kdestroy >/dev/null 2>&1 || true
   kinit -kt /etc/security/keytabs/usera.user.keytab usera@HADOOP.LAB
-  echo "smoke test written by usera" > /tmp/smoke-usera.txt
+  echo "smoke test written by usera" > /tmp/smoke_test_usera.txt
   hdfs dfs -mkdir -p /secure-lab
   hdfs dfs -chmod 755 /secure-lab
-  hdfs dfs -put -f /tmp/smoke-usera.txt /secure-lab/smoke-usera.txt
-  hdfs dfs -chmod 644 /secure-lab/smoke-usera.txt
+  hdfs dfs -put -f /tmp/smoke_test_usera.txt /secure-lab/smoke_test_usera.txt
+  hdfs dfs -chmod 644 /secure-lab/smoke_test_usera.txt
 '
-pass "usera created /secure-lab/smoke-usera.txt"
+pass "usera created /secure-lab/smoke_test_usera.txt"
 
 echo "[3/7] verify owner is usera"
-owner=$(compose exec -T namenode bash -lc 'hdfs dfs -stat %u /secure-lab/smoke-usera.txt' | tr -d '\r')
+owner=$(compose exec -T namenode bash -lc 'hdfs dfs -stat %u /secure-lab/smoke_test_usera.txt' | tr -d '\r')
 if [[ "$owner" != "usera" ]]; then
   fail "Expected owner=usera, got owner=${owner}"
 fi
@@ -120,20 +120,20 @@ compose exec -T namenode bash -lc '
 pass "userb Kerberos login succeeded"
 
 echo "[5/7] verify userb can read when permissions allow"
-read_value=$(compose exec -T namenode bash -lc 'hdfs dfs -cat /secure-lab/smoke-usera.txt' | tr -d '\r')
+read_value=$(compose exec -T namenode bash -lc 'hdfs dfs -cat /secure-lab/smoke_test_usera.txt' | tr -d '\r')
 if [[ "$read_value" != "smoke test written by usera" ]]; then
   fail "userb read check failed. Expected file content not returned."
 fi
 pass "userb read allowed as expected"
 
 echo "[6/7] verify userb cannot overwrite when permissions deny"
-if compose exec -T namenode bash -lc 'echo "should fail overwrite" > /tmp/smoke-userb.txt && hdfs dfs -put -f /tmp/smoke-userb.txt /secure-lab/smoke-usera.txt'; then
+if compose exec -T namenode bash -lc 'echo "should fail overwrite" > /tmp/smoke_test_userb.txt && hdfs dfs -put -f /tmp/smoke_test_userb.txt /secure-lab/smoke_test_usera.txt'; then
   fail "Unexpected success: userb overwrote usera file"
 fi
 pass "userb overwrite denied as expected"
 
 echo "[7/7] verify userb cannot delete when permissions deny"
-if compose exec -T namenode bash -lc 'hdfs dfs -rm -f /secure-lab/smoke-usera.txt'; then
+if compose exec -T namenode bash -lc 'hdfs dfs -rm -f /secure-lab/smoke_test_usera.txt'; then
   fail "Unexpected success: userb deleted usera file"
 fi
 pass "userb delete denied as expected"
