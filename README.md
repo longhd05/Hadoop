@@ -16,6 +16,12 @@ To deploy an example HDFS cluster, run:
   docker-compose up
 ```
 
+If you upload files from the NameNode web UI, the value of `HADOOP_HOST` must match the hostname/IP you use to open `http://<host>:9870`. When you access the UI locally via `localhost`, you can skip this because the default is already `localhost`; when you access from another machine or with a custom host/IP, set `HADOOP_HOST` explicitly before starting containers:
+```
+  export HADOOP_HOST=10.10.10.156
+  docker-compose up
+```
+
 Run example wordcount job:
 ```
   make wordcount
