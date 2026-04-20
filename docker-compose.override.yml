@@ -3,7 +3,7 @@ services:
     environment:
       CORE_CONF_hadoop_http_filter_initializers: "org.apache.hadoop.security.HttpCrossOriginFilterInitializer"
       CORE_CONF_hadoop_http_cross___origin_enabled: "true"
-      CORE_CONF_hadoop_http_cross___origin_allowed___origins: "http://10.10.10.156:9870"
+      CORE_CONF_hadoop_http_cross___origin_allowed___origins: "http://${HADOOP_HOST:-localhost}:9870"
       CORE_CONF_hadoop_http_cross___origin_allowed___methods: "GET,POST,PUT,DELETE,HEAD,OPTIONS"
       CORE_CONF_hadoop_http_cross___origin_allowed___headers: "X-Requested-With,Content-Type,Accept,Origin"
       CORE_CONF_hadoop_http_cross___origin_max___age: "1800"
@@ -16,13 +16,13 @@ services:
       SERVICE_PRECONDITION: "namenode:9870"
       CORE_CONF_hadoop_http_filter_initializers: "org.apache.hadoop.security.HttpCrossOriginFilterInitializer"
       CORE_CONF_hadoop_http_cross___origin_enabled: "true"
-      CORE_CONF_hadoop_http_cross___origin_allowed___origins: "http://10.10.10.156:9870"
+      CORE_CONF_hadoop_http_cross___origin_allowed___origins: "http://${HADOOP_HOST:-localhost}:9870"
       CORE_CONF_hadoop_http_cross___origin_allowed___methods: "GET,POST,PUT,DELETE,HEAD,OPTIONS"
       CORE_CONF_hadoop_http_cross___origin_allowed___headers: "X-Requested-With,Content-Type,Accept,Origin"
       CORE_CONF_hadoop_http_cross___origin_max___age: "1800"
       HDFS_CONF_dfs_client_use_datanode_hostname: "true"
       HDFS_CONF_dfs_datanode_use_datanode_hostname: "true"
-      HDFS_CONF_dfs_datanode_hostname: "10.10.10.156"
+      HDFS_CONF_dfs_datanode_hostname: "${HADOOP_HOST:-localhost}"
 
   resourcemanager:
     ports:
