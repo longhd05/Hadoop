@@ -7,7 +7,7 @@ This fork keeps the original docker-compose flow and adds a full Hadoop secure-m
 - per-user HDFS ownership based on Kerberos identity
 - hostname/FQDN-based access for browser SPNEGO
 
-## Quick start
+## Quick Start
 
 ```bash
 docker compose up -d --build
@@ -21,7 +21,11 @@ Then verify the cluster and multi-user ownership behavior:
 
 ## Hostnames to add in `/etc/hosts`
 
-Use your VM IP (example: `10.10.10.156`) and add the same mapping on:
+Use the host/IP your browser reaches for published Docker ports:
+- native Linux Docker on VM: use the VM IP (example: `10.10.10.156`)
+- Docker Desktop: use `127.0.0.1` or the Desktop-exposed host/IP for published ports
+
+Add the same mapping on:
 1. the Ubuntu VM running Docker
 2. the client machine/browser
 
@@ -33,6 +37,8 @@ Use your VM IP (example: `10.10.10.156`) and add the same mapping on:
 10.10.10.156 historyserver.hadoop.lab
 10.10.10.156 kdc.hadoop.lab
 ```
+
+If you run Docker Desktop instead of native Linux Docker, use the IP/hostname that your browser can route to the published ports (not container-internal IPs).
 
 ## Web UI endpoints (FQDN-based)
 
@@ -113,6 +119,7 @@ Expected: permission denied unless ACL/mode grants write.
 
 - The repo still uses env-to-XML mapping (`CORE_CONF_`, `HDFS_CONF_`, `YARN_CONF_`, `MAPRED_CONF_`); Kerberos/SPNEGO settings are provided through the same mechanism.
 - `dfs.permissions.enabled` is set to `true`.
+- `hadoop.security.authentication=kerberos` and `hadoop.http.authentication.type=kerberos` are both enabled so identity comes from Kerberos/SPNEGO, not simple-auth fallback.
 - No reverse-proxy identity substitution is used as the source of truth for HDFS ownership.
 - HTTP SPNEGO uses `HTTP/_HOST@HADOOP.LAB`; each service runs with a hostname/FQDN matching the generated principals.
 
