@@ -15,16 +15,21 @@ chmod 700 "$KEYTAB_DIR"
 add_password_principal() {
   local principal=$1
   local password=$2
-  if ! kadmin.local -q "getprinc ${principal}" >/dev/null 2>&1; then
+  if principal_missing "$principal"; then
     kadmin.local -q "addprinc -pw ${password} ${principal}"
   fi
 }
 
 add_service_principal() {
   local principal=$1
-  if ! kadmin.local -q "getprinc ${principal}" >/dev/null 2>&1; then
+  if principal_missing "$principal"; then
     kadmin.local -q "addprinc -randkey ${principal}"
   fi
+}
+
+principal_missing() {
+  local principal=$1
+  kadmin.local -q "getprinc ${principal}" 2>&1 | grep -q "does not exist"
 }
 
 add_password_principal "$KADMIN_PRINCIPAL" "$KADMIN_PASSWORD"
