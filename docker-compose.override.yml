@@ -12,6 +12,7 @@ services:
   datanode:
     ports:
       - "9864:9864"
+      - "9866:9866"
     environment:
       SERVICE_PRECONDITION: "namenode:9870"
       CORE_CONF_hadoop_http_filter_initializers: "org.apache.hadoop.security.HttpCrossOriginFilterInitializer"
