@@ -9,7 +9,22 @@ compose() {
   docker compose "$@"
 }
 
-echo "[1/4] kinit as usera and create HDFS file"
+echo "[1/6] verify effective runtime secure-mode config"
+compose exec -T namenode bash -lc '
+  set -euo pipefail
+  test "$(hdfs getconf -confKey hadoop.security.authentication)" = "kerberos"
+  test "$(hdfs getconf -confKey hadoop.security.authorization)" = "true"
+  test "$(hdfs getconf -confKey dfs.permissions.enabled)" = "true"
+'
+
+echo "[2/6] verify WebHDFS does not accept unauthenticated user.name pseudo-auth"
+status=$(compose exec -T namenode bash -lc 'curl -sS -o /dev/null -w "%{http_code}" "http://namenode.hadoop.lab:9870/webhdfs/v1/?op=GETHOMEDIRECTORY&user.name=usera"' | tr -d '\r')
+if [[ "$status" != "401" ]]; then
+  echo "Expected HTTP 401 for unauthenticated WebHDFS user.name access, got: $status"
+  exit 1
+fi
+
+echo "[3/6] kinit as usera and create HDFS file"
 compose exec -T namenode bash -lc '
   set -euo pipefail
   kdestroy >/dev/null 2>&1 || true
@@ -20,14 +35,14 @@ compose exec -T namenode bash -lc '
   hdfs dfs -put -f /tmp/usera.txt /secure-lab/usera.txt
 '
 
-echo "[2/4] verify owner is usera"
+echo "[4/6] verify owner is usera"
 owner=$(compose exec -T namenode bash -lc 'hdfs dfs -stat %u /secure-lab/usera.txt' | tr -d '\r')
 if [[ "$owner" != "usera" ]]; then
   echo "Expected owner usera but got: $owner"
   exit 1
 fi
 
-echo "[3/4] kinit as userb and attempt unauthorized overwrite/delete"
+echo "[5/6] kinit as userb and attempt unauthorized overwrite/delete"
 compose exec -T namenode bash -lc '
   set -euo pipefail
   kdestroy >/dev/null 2>&1 || true
@@ -43,4 +58,4 @@ compose exec -T namenode bash -lc '
   fi
 '
 
-echo "[4/4] permission check passed: userb blocked as expected"
+echo "[6/6] permission check passed: userb blocked as expected"

@@ -7,8 +7,10 @@ KADMIN_PASSWORD=${KADMIN_PASSWORD:-adminpw}
 USERA_PASSWORD=${USERA_PASSWORD:-userapw}
 USERB_PASSWORD=${USERB_PASSWORD:-userbpw}
 KEYTAB_DIR=${KEYTAB_DIR:-/etc/security/keytabs}
+umask 077
 
 mkdir -p "$KEYTAB_DIR"
+chmod 700 "$KEYTAB_DIR"
 
 add_password_principal() {
   local principal=$1
@@ -61,5 +63,6 @@ if [ ! -f "${KEYTAB_DIR}/http-secret" ]; then
   head -c 32 /dev/urandom | base64 > "${KEYTAB_DIR}/http-secret"
 fi
 
+test -s "${KEYTAB_DIR}/http-secret"
 chmod 600 "${KEYTAB_DIR}"/*.keytab "${KEYTAB_DIR}/http-secret"
 touch "${KEYTAB_DIR}/.bootstrapped"
