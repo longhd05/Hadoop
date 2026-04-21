@@ -25,6 +25,9 @@ services:
     networks:
       - hbase
     hostname: namenode.hadoop.lab
+    ports:
+      - "9870:9870"
+      - "9000:9000"
     volumes:
       - namenode:/hadoop/dfs/name
       - kerberos_secrets:/etc/security/keytabs:ro
