@@ -21,7 +21,7 @@ If you upload files from the NameNode web UI, the value of `HADOOP_HOST` must ma
   export HADOOP_HOST=10.10.10.156
   docker-compose up
 ```
-For remote UI uploads, the DataNode transfer port (`9866`) must also be reachable at `HADOOP_HOST` from the Docker network (this repository now publishes it in `docker-compose.override.yml`).
+For remote UI uploads, the DataNode transfer port (`9866`) must also be reachable at `HADOOP_HOST` from the Docker network (this repository now publishes it in `docker-compose.yml`).
 
 Run example wordcount job:
 ```
